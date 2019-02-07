@@ -12,6 +12,7 @@ import ChameleonFramework
 
 class TodoListViewController: SwipeTableViewController {
     
+    @IBOutlet weak var searchBar: UISearchBar!
     var todoItems: Results<Item>?
     let realm = try! Realm()
     
@@ -27,10 +28,41 @@ class TodoListViewController: SwipeTableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-  
+        
+        }
+        
+    override func viewWillAppear(_ animated: Bool) {
+        
+        guard let hexColour = selectedCategory?.colour else {fatalError()}
+            
+        title = selectedCategory?.name
+        
+        updateNavBar(withHexCode: hexColour)
     }
     
-    //MARK - Tableview Datasource Methods
+    override func viewWillDisappear(_ animated: Bool) {
+       
+        updateNavBar(withHexCode: "1D9BF6")
+    }
+    
+    //MARK: - Nav Bar Setup methods
+    func updateNavBar (withHexCode colourHexCode: String) {
+        
+        guard let navBar = navigationController?.navigationBar else{fatalError("Navigation controller does not exist")}
+        
+        guard let navBarColour = UIColor(hexString: colourHexCode) else {fatalError()}
+        
+        navBar.barTintColor = navBarColour
+        
+        navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
+        
+        navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(navBarColour, returnFlat: true)]
+        
+        searchBar.barTintColor = navBarColour
+    }
+    
+    
+    //MARK: - Tableview Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return todoItems?.count ?? 1
@@ -43,7 +75,7 @@ class TodoListViewController: SwipeTableViewController {
             
             cell.textLabel?.text = item.title
             
-            if let colour = FlatSand().darken(byPercentage:CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+            if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage:CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
                 cell.backgroundColor = colour
                 
                 cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
@@ -84,11 +116,18 @@ class TodoListViewController: SwipeTableViewController {
         
         var textField = UITextField()
         
+        
         let alert = UIAlertController(title: "Add New Item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             
             // What will happen once user presss the Add Item button on UIAlert
+            
+            // Do not add cell if the text field is empty
+            if textField.text!.trimmingCharacters(in: .whitespaces).isEmpty {
+                return
+            }
+            
             if let currentCategory = self.selectedCategory {
                 do {
                     try self.realm.write {
@@ -100,12 +139,10 @@ class TodoListViewController: SwipeTableViewController {
                 } catch {
                     print ("Error saving new item, \(error)")
                 }
+                
             }
+
             
-//            if textField.text?.isEmpty == true {
-//                return
-//            }
-           
             self.tableView.reloadData()
         }
         

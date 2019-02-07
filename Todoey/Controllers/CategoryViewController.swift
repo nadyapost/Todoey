@@ -35,15 +35,26 @@ class CategoryViewController: SwipeTableViewController {
         
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        cell.textLabel?.text  = categories?[indexPath.row].name ?? "No Categories Added Yet."
-       
-        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].colour ?? "1D9BF6")
+        if let caterory = categories?[indexPath.row] {
+            
+            cell.textLabel?.text = caterory.name
+            
+            guard let categoryColour = UIColor(hexString: caterory.colour) else {fatalError()}
+            
+            cell.backgroundColor = categoryColour
+            
+            cell.textLabel?.textColor = ContrastColorOf(categoryColour, returnFlat: true)
+            
+        }
+        
+        
+        
         
         return cell
     }
     
     
-    //MARK - TableView Delegat Methods
+    //MARK: - TableView Delegat Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         performSegue(withIdentifier: "goToItems", sender: self)
@@ -58,7 +69,7 @@ class CategoryViewController: SwipeTableViewController {
         
     }
     
-    //MARK - Data Manipulation Methods
+    //MARK: - Data Manipulation Methods
     func save(category: Category) {
         
         do {
@@ -78,7 +89,7 @@ class CategoryViewController: SwipeTableViewController {
         tableView.reloadData()
         }
     
-    //MARK - Delete Data From Swipe
+    //MARK: - Delete Data From Swipe
     override func updateModel(at indexPath: IndexPath) {
         if let categoryForDeletion = self.categories?[indexPath.row] {
             do {
@@ -108,7 +119,7 @@ class CategoryViewController: SwipeTableViewController {
             newCategory.name = textField.text!
             newCategory.colour = UIColor.randomFlat.hexValue()
             
-            if textField.text?.isEmpty == true {
+            if textField.text!.trimmingCharacters(in: .whitespaces).isEmpty {
                 return
             }
           
